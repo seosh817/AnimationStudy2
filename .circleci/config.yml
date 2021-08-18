@@ -1,0 +1,77 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/android:api-30
+    steps:
+    - checkout
+    - run:
+        command: |
+          sdkmanager "system-images;android-29;default;x86"
+        name: Install system image "system-images;android-29;default;x86"
+    - run:
+        command: |
+          find . -name 'build.gradle' | sort | xargs cat |
+          shasum | awk '{print $1}' > ./tmp_gradle_cache_seed
+        name: Generate cache checksum
+    - restore_cache:
+        key: gradle-v1a-{{ arch }}-{{ checksum "./tmp_gradle_cache_seed" }}
+        name: Restore gradle cache
+    - run:
+        command: |
+          ./gradlew build
+        name: 'Run: ./gradlew build'
+    - save_cache:
+        key: gradle-v1a-{{ arch }}-{{ checksum "./tmp_gradle_cache_seed" }}
+        name: Save gradle cache
+        paths:
+        - ~/.gradle/caches
+        - ~/.gradle/wrapper
+    - save_cache:
+        key: gradle-properties-${CIRCLE_WORKFLOW_ID}_21
+        name: Save gradle properties
+        paths:
+          - ~/.gradle/gradle.properties
+    - store_artifacts:
+        path: animation-practice/build/reports
+        destination: reports
+    - store_test_results:
+        path: animation-practice/build/test-results
+    - store_artifacts:
+        path: app/build/outputs/apk/release
+        destination: apk
+    - store_artifacts:
+        path: app/build/outputs/mapping/release
+        destination: mapping
+    - persist_to_workspace:
+        root: .
+        paths:
+          - .
+    resource_class: medium
+  deploy:
+    docker:
+      - image: circleci/android:api-30
+    working_directory: ~/code
+    steps:
+      - attach_workspace:
+          at: .
+      - restore_cache:
+          key: gradle-v1a-{{ arch }}-{{ checksum "./tmp_gradle_cache_seed" }}
+          name: Restore gradle cache
+#      - run:
+#          name: Upload Maven Central
+#          command: ./gradlew uploadArchives
+
+workflows:
+  version: 2
+  build_deploy:
+    jobs:
+    - build
+    - deploy:
+        requires:
+          - build
+        filters:
+          branches:
+            only:
+              - master
+              - /release\/.*/
