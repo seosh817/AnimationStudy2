@@ -32,8 +32,18 @@ class MainActivity : AppCompatActivity() {
                         R.anim.slide_out_right
                     ) { SettingsFragment() }
                 else -> false
-                
             }
         }
+        if (savedInstanceState == null) {
+            binding.bottomNavigationView.selectedItemId = R.id.tab_home
+        }
+//        else {
+//            navigator.onRestoreInstanceState(savedInstanceState)
+//        }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        navigator.onSaveInstanceState(outState)
     }
 }
