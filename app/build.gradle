@@ -52,6 +52,12 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
     implementation 'androidx.collection:collection-ktx:1.1.0'
 
+    implementation 'androidx.recyclerview:recyclerview:1.2.1'
+
+    implementation 'androidx.vectordrawable:vectordrawable:1.2.0-alpha02'
+    implementation 'androidx.vectordrawable:vectordrawable-seekable:1.0.0-alpha02'
+
+    implementation 'androidx.fragment:fragment-ktx:1.4.0-alpha07'
 
     implementation project(':shlibrary')
 
