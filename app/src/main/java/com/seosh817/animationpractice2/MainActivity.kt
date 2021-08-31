@@ -37,9 +37,9 @@ class MainActivity : AppCompatActivity() {
         if (savedInstanceState == null) {
             binding.bottomNavigationView.selectedItemId = R.id.tab_home
         }
-//        else {
-//            navigator.onRestoreInstanceState(savedInstanceState)
-//        }
+        else {
+            navigator.onRestoreInstanceState(savedInstanceState)
+        }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {

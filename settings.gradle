@@ -1,2 +1,4 @@
 rootProject.name = "AnimationPractice2"
 include ':app', ':shlibrary'
+
+project(':shlibrary').projectDir = new File('SHLibrary/shlibrary')

@@ -1,25 +1,39 @@
 package com.seosh817.animationpractice2
 
+import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
+import android.transition.TransitionManager
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Observer
+import androidx.recyclerview.widget.AlphaTranslationAnimator
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.NO_POSITION
 import androidx.vectordrawable.graphics.drawable.SeekableAnimatedVectorDrawable
+import com.google.android.material.appbar.AppBarLayout
 import com.seosh817.animationpractice2.databinding.FragmentHomeBinding
 import com.seosh817.animationpractice2.databinding.ItemHomeBinding
 import com.seosh817.animationpractice2.utils.NoDiffCallback
 
 class HomeFragment : Fragment(R.layout.fragment_home) {
+
     private lateinit var binding: FragmentHomeBinding
     private val viewModel: HomeViewModel by viewModels()
-
     private var savd: SeekableAnimatedVectorDrawable? = null
+    private var isTop: Boolean = true
+    
+    private val listener = AppBarLayout.OnOffsetChangedListener { appBarLayout, verticalOffset ->
+
+        val progress = -verticalOffset / appBarLayout.totalScrollRange.toFloat()
+
+    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
@@ -28,15 +42,28 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 savd = it
 
             }
+
+            val adapter = Adapter { uiModel ->
+                activity?.navigateToDetail(uiModel)
+            }
+
+            recyclerView.itemAnimator = AlphaTranslationAnimator().apply { addDuration = 200}
+            recyclerView.adapter = adapter
+
+            viewModel.uiModel.observe(viewLifecycleOwner, Observer {
+                adapter.submitList(it.items)
+            })
+
         }
+
+
+
     }
 
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        return super.onCreateView(inflater, container, savedInstanceState)
+    private fun Activity.navigateToDetail(uiModel: HomeItemUiModel) {
+        val intent = Intent(this, DetailActivity::class.java)
+        intent.putExtra("resId", uiModel.resId)
+        startActivity(intent)
     }
 
     class Adapter(private val onItemClick: (HomeItemUiModel) -> Unit) :
@@ -49,7 +76,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 val from = field
                 field = value
                 if (from != NO_POSITION) notifyItemChanged(from)
-                if (value != NO_POSITION) notifyItemChanged(from)
+                if (value != NO_POSITION) notifyItemChanged(value)
             }
 
         init {
@@ -65,6 +92,7 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
                 expandedPosition = if (expandedPosition == position) {
                     NO_POSITION
                 } else {
+                    Log.d(TAG, position.toString())
                     position
                 }
             })
@@ -95,8 +123,14 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             binding.ivThumnail.setImageResource(uiModel.resId)
             binding.newBadge.isVisible = uiModel.isNew
 
+            TransitionManager.beginDelayedTransition(binding.root)
+            Log.d(TAG, "expanded == $expanded")
             binding.root.isActivated = expanded
             binding.ivThumnail.isVisible = expanded
         }
+    }
+
+    companion object {
+        val TAG: String = HomeFragment::class.java.simpleName
     }
 }
