@@ -124,7 +124,6 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
             binding.newBadge.isVisible = uiModel.isNew
 
             TransitionManager.beginDelayedTransition(binding.root)
-            Log.d(TAG, "expanded == $expanded")
             binding.root.isActivated = expanded
             binding.ivThumnail.isVisible = expanded
         }
