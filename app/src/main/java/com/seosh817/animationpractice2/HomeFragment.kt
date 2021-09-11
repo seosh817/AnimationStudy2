@@ -30,9 +30,11 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
     private var isTop: Boolean = true
     
     private val listener = AppBarLayout.OnOffsetChangedListener { appBarLayout, verticalOffset ->
-
+        Log.d(TAG, "verticalOffset: $verticalOffset, totalScrollRange: ${appBarLayout.totalScrollRange.toFloat()}")
         val progress = -verticalOffset / appBarLayout.totalScrollRange.toFloat()
-
+        binding.header.root.progress = progress
+        savd?.currentPlayTime = (100 * progress).toLong()
+        isTop = progress <= 0f
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -40,7 +42,15 @@ class HomeFragment : Fragment(R.layout.fragment_home) {
         binding = FragmentHomeBinding.bind(view).apply {
             SeekableAnimatedVectorDrawable.create(view.context, R.drawable.avd_search)?.let {
                 savd = it
-
+                header.icon.setImageDrawable(it)
+            }
+            header.icon.setOnClickListener {
+                if (isTop) {
+                    Toast.makeText(it.context, "Search clicked!", Toast.LENGTH_SHORT).show()
+                } else {
+                    appBar.setExpanded(true, true)
+                    recyclerView.smoothScrollToPosition(0)
+                }
             }
 
             val adapter = Adapter { uiModel ->
