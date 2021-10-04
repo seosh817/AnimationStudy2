@@ -11,5 +11,6 @@
     <color name="favorite">#F44336</color>
     <color name="colorPrimary">#0F4C81</color>
     <color name="colorPrimaryDark">#082742</color>
+    <color name="colorAccent">#E8A188</color>
 
 </resources>
