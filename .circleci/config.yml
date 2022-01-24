@@ -15,18 +15,21 @@ jobs:
     # See: https://circleci.com/docs/2.0/executor-types/
     executor:
       name: android/android-machine
+    working_directory: ~/code
 
     # Add steps to the job
     # See: https://circleci.com/docs/2.0/configuration-reference/#steps
     steps:
       # Checkout the code as the first step.
       - checkout
-
+      - run:
+          name: submodule
+          command: |
+            git submodule sync
+            git submodule update --init --recursive
       # The next step will run the unit tests
       - android/run-tests:
-            test-command: ./gradlew ktlintCheck
-      
-#          test-command: ./gradlew lint testDebug --continue
+          test-command: ./gradlew lint testDebug --continue
 
       # Then start the emulator and run the Instrumentation tests!
       - android/start-emulator-and-run-tests:
@@ -38,23 +41,24 @@ jobs:
           name: Assemble release build
           command: |
             ./gradlew assembleRelease
+      - persist_to_workspace:
+          root: .
+          paths:
+          - .
 #      - run:
 #          name: Install fastlane
 #          command: bundle install
 #      - run:
 #          name: Execute fastlane
 #          command: bundle exec fastlane playstore
+
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
   build:
     executor: android-executor
     steps:
-    - checkout
-    - run:
-          name: submodule
-          command: |
-            git submodule sync
-            git submodule update --init --recursive
+    - attach_workspace:
+        at: .
     - run:
         command: |
           sdkmanager "system-images;android-29;default;x86"
@@ -93,10 +97,10 @@ jobs:
     - store_artifacts:
         path: app/build/outputs/mapping/release
         destination: mapping
-    - persist_to_workspace:
-        root: .
-        paths:
-          - .
+#    - persist_to_workspace:
+#        root: .
+#        paths:
+#          - .
 #    resource_class: medium
   deploy:
     docker:
@@ -117,7 +121,9 @@ workflows:
   build_deploy:
     jobs:
     - build-and-test
-    - build
+    - build:
+        requires:
+        - build-and-test
     - deploy:
         requires:
           - build
