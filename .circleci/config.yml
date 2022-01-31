@@ -28,14 +28,6 @@ jobs:
           command: |
             git submodule sync
             git submodule update --init --recursive
-      # The next step will run the unit tests
-      - android/run-tests:
-          test-command: ./gradlew lint testDebug --continue
-
-      # Then start the emulator and run the Instrumentation tests!
-      - android/start-emulator-and-run-tests:
-          test-command: ./gradlew connectedDebugAndroidTest
-          system-image: system-images;android-30;google_apis;x86
 
       # And finally run the release build
       - run:
@@ -55,8 +47,45 @@ jobs:
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
+  test:
+    executor:
+      name: android/android-machine
+      resource-class: medium
+    steps:
+      - attach_workspace:
+          at: .
+          
+      # The next step will run the unit tests
+      - android/run-tests:
+          test-command: ./gradlew lint testDebug --continue
+
+      # Then start the emulator and run the Instrumentation tests!
+      - android/start-emulator-and-run-tests:
+          test-command: ./gradlew connectedDebugAndroidTest
+          system-image: system-images;android-30;google_apis;x86
+      # Create an AVD named "myavd"
+      - android/create-avd:
+          avd-name: myavd
+          system-image: system-images;android-29;default;x86
+          install: true
+      # By default, after starting up the emulator, a cache will be restored,
+      # "./gradlew assembleDebugAndroidTest" will be run and then a script
+      # will be run to wait for the emulator to start up.
+      # Specify the "post-emulator-launch-assemble-command" command to override
+      # the gradle command run, or set "wait-for-emulator" to false to disable
+      # waiting for the emulator altogether.
+      - android/start-emulator:
+          avd-name: myavd
+          no-window: true
+          restore-gradle-cache-prefix: v1a
+      # Runs "./gradlew connectedDebugAndroidTest" by default.
+      # Specify the "test-command" parameter to customize the command run.
+      - android/run-tests
+      - android/save-gradle-cache:
+          cache-prefix: v1a
   build:
-    executor: android-executor
+    executor:
+      name: android-executor
     steps:
     - attach_workspace:
         at: .
@@ -122,9 +151,13 @@ workflows:
   build_deploy:
     jobs:
     - build-and-test
+    - test:
+       requires:
+          - build-and-test
     - build:
         requires:
-        - build-and-test
+          - build-and-test
+          - test
     - deploy:
         requires:
           - build
