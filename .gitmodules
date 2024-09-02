@@ -1,0 +1,3 @@
+[submodule "SHLibrary"]
+	path = SHLibrary
+	url = https://github.com/seosh817/SHLibrary.git
